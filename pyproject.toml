@@ -40,9 +40,9 @@ dev = [
 tavily = "local_tavily.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/tavily-cli"
-Repository = "https://github.com/yourusername/tavily-cli"
-Issues = "https://github.com/yourusername/tavily-cli/issues"
+Homepage = "https://github.com/socamalo/tavily-cli"
+Repository = "https://github.com/socamalo/tavily-cli"
+Issues = "https://github.com/socamalo/tavily-cli/issues"
 
 [build-system]
 requires = ["hatchling"]

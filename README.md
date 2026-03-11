@@ -53,7 +53,7 @@ pipx install local-tavily
 ### From source
 
 ```bash
-git clone https://github.com/yourusername/tavily-cli.git
+git clone https://github.com/socamalo/tavily-cli.git
 cd tavily-cli
 uv pip install -e .
 ```
@@ -174,7 +174,7 @@ The CLI automatically rotates between API keys based on the day of the month:
 
 ```bash
 # Clone
-git clone https://github.com/yourusername/tavily-cli.git
+git clone https://github.com/socamalo/tavily-cli.git
 cd tavily-cli
 
 # Install in editable mode
