@@ -170,6 +170,40 @@ The CLI automatically rotates between API keys based on the day of the month:
 - With 6 keys: Days 1-5 → Key 1, Days 6-10 → Key 2, etc.
 - With 3 keys: Days 1-10 → Key 1, Days 11-20 → Key 2, Days 21-31 → Key 3
 
+## Tavily Workspace & Skills
+
+This project includes a **Tavily workspace skill** for AI agents (such as Cursor and Claude) to call the CLI directly.
+
+- **Skill location**: `skills/tavily/SKILL.md`
+- **Purpose**: Exposes `tavily` commands (search, research, extract, crawl, map, usage, config) as an AI-friendly tool interface.
+- **Default behavior**: All skill commands use `--output json` so agents can reliably parse structured results.
+
+### Using the Tavily Skill in AI Workspaces
+
+- **Cursor / Claude**: Add this repository (or the published package) as a workspace/tool source, then enable the `tavily` skill.
+- **Typical agent commands**:
+  - `/tavily search "<query>"` — Web search with filters and time ranges
+  - `/tavily research "<topic>"` — Long‑form, async research jobs
+  - `/tavily extract <url>` — Structured content extraction
+  - `/tavily crawl <url> --limit N` — Small website crawls
+  - `/tavily map <url> --limit N` — URL discovery / sitemap‑like mapping
+  - `/tavily usage` / `/tavily config` — Inspect API usage and configuration
+
+### Skill Evaluation (Claude)
+
+The `tavily` skill has been evaluated with automated agents and **passed all tested workflows**:
+
+- **basic-search**: `tavily search "OpenAI GPT-5 latest news"` → 10 relevant results ✅
+- **search-with-filters**: `tavily search --include-domains --days 30` → filters applied correctly ✅
+- **deep-research**: `tavily research "AI impact on software engineering jobs"` → research job started ✅
+- **extract-content**: `tavily extract https://en.wikipedia.org/wiki/Artificial_intelligence` → full article extracted ✅
+- **crawl-website**: `tavily crawl https://docs.python.org/3/tutorial/ --limit 5` → 5 pages crawled ✅
+- **map-website**: `tavily map https://docs.python.org --limit 20` → 14 URLs discovered ✅
+- **check-usage**: `tavily usage` → API keys / usage info returned ✅
+- **view-config**: `tavily config` → configuration displayed correctly ✅
+
+These results confirm the skill is production‑ready for LLM agents.
+
 ## Development
 
 ```bash
