@@ -4,6 +4,7 @@
 # Scraped docs (do not commit)
 tavily-docs-md/
 tavily-docs-urls.*
+*tavily-workspace/
 
 # Python
 __pycache__/
