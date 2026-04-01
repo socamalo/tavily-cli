@@ -24,17 +24,21 @@ def mock_tavily_client(mocker):
 @pytest.fixture
 def mock_key_manager(mocker):
     """Mock key manager for testing."""
-    mock = mocker.patch("local_tavily.search.key_manager")
-    mock.api_key = "test-api-key"
-    return mock
+    mock_km = MagicMock()
+    mock_km.get_key.return_value = "test-api-key"
+    mock_km.get_next_available_key.return_value = None  # No retry by default
+    mocker.patch("local_tavily.search.get_key_manager", return_value=mock_km)
+    return mock_km
 
 
 @pytest.fixture
 def mock_extract_key_manager(mocker):
     """Mock key manager for extract testing."""
-    mock = mocker.patch("local_tavily.extract.key_manager")
-    mock.api_key = "test-api-key"
-    return mock
+    mock_km = MagicMock()
+    mock_km.get_key.return_value = "test-api-key"
+    mock_km.get_next_available_key.return_value = None
+    mocker.patch("local_tavily.extract.get_key_manager", return_value=mock_km)
+    return mock_km
 
 
 @pytest.fixture

@@ -10,15 +10,10 @@ from typing import Any, Dict, List, Optional, Union
 
 from tavily import TavilyClient
 
-from local_tavily.key_manager import key_manager
+from local_tavily.key_manager import get_key_manager, NoAvailableKeyError
 from local_tavily.utils import normalize_country
 
 logger = logging.getLogger("local_tavily")
-
-
-def get_windows_proxy_config():
-    """Optional proxy configuration for Windows environments."""
-    return None
 
 
 def tavily_search(
@@ -75,8 +70,9 @@ def tavily_search(
     """
     try:
         logger.info(f"Executing Tavily search: {query}")
-        api_key = key_manager.api_key
-        client = TavilyClient(api_key=api_key, proxies=get_windows_proxy_config())
+        key_manager_instance = get_key_manager()
+        api_key = key_manager_instance.get_key()
+        client = TavilyClient(api_key=api_key)
 
         # Validate max_results range (0-20 according to API docs)
         if not (0 <= max_results <= 20):
@@ -199,6 +195,9 @@ def tavily_search(
         response = client.search(**params)
         logger.info("Tavily search completed successfully")
 
+        # Record successful usage
+        key_manager_instance.record_usage(api_key, success=True)
+
         return {
             "status": "success",
             "results": response.get("results", []),
@@ -217,7 +216,38 @@ def tavily_search(
             "message": f"Tavily Python SDK not installed: {str(e)}",
         }
     except Exception as e:
+        # Record failed usage
+        key_manager_instance.record_usage(api_key, success=False, error_msg=str(e))
         logger.error(f"Error during Tavily search: {str(e)}")
+
+        # Try next key if available
+        next_key = key_manager_instance.get_next_available_key(api_key)
+        if next_key:
+            logger.info(f"Retrying with next key...")
+            return tavily_search(
+                query=query,
+                search_depth=search_depth,
+                max_results=max_results,
+                topic=topic,
+                days=days,
+                time_range=time_range,
+                start_date=start_date,
+                end_date=end_date,
+                include_domains=include_domains,
+                exclude_domains=exclude_domains,
+                chunks_per_source=chunks_per_source,
+                include_answer=include_answer,
+                include_images=include_images,
+                include_image_descriptions=include_image_descriptions,
+                include_raw_content=include_raw_content,
+                include_favicon=include_favicon,
+                country=country,
+                timeout=timeout,
+                auto_parameters=auto_parameters,
+                exact_match=exact_match,
+                include_usage=include_usage,
+            )
+
         return {
             "status": "error",
             "message": f"Error during Tavily search: {str(e)}",

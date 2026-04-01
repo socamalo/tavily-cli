@@ -12,8 +12,8 @@ class TestExtractModule:
 
     def test_extract_success(self, mocker, sample_extract_response):
         """Test successful extraction."""
-        mock_key_manager = mocker.patch("local_tavily.extract.key_manager")
-        mock_key_manager.api_key = "test-api-key"
+        mock_km = mocker.patch("local_tavily.extract.get_key_manager")
+        mock_km.return_value.get_key.return_value = "test-api-key"
 
         mock_client_class = mocker.patch("local_tavily.extract.TavilyClient")
         mock_client = mocker.MagicMock()
@@ -28,8 +28,8 @@ class TestExtractModule:
 
     def test_extract_multiple_urls(self, mocker):
         """Test extraction with multiple URLs."""
-        mock_key_manager = mocker.patch("local_tavily.extract.key_manager")
-        mock_key_manager.api_key = "test-api-key"
+        mock_km = mocker.patch("local_tavily.extract.get_key_manager")
+        mock_km.return_value.get_key.return_value = "test-api-key"
 
         mock_client_class = mocker.patch("local_tavily.extract.TavilyClient")
         mock_client = mocker.MagicMock()
@@ -45,8 +45,8 @@ class TestExtractModule:
 
     def test_extract_too_many_urls(self, mocker):
         """Test extraction with too many URLs."""
-        mock_key_manager = mocker.patch("local_tavily.extract.key_manager")
-        mock_key_manager.api_key = "test-api-key"
+        mock_km = mocker.patch("local_tavily.extract.get_key_manager")
+        mock_km.return_value.get_key.return_value = "test-api-key"
 
         urls = [f"https://site{i}.com" for i in range(21)]
         result = tavily_extract(urls)
@@ -56,8 +56,8 @@ class TestExtractModule:
 
     def test_extract_with_all_params(self, mocker):
         """Test extraction with all parameters."""
-        mock_key_manager = mocker.patch("local_tavily.extract.key_manager")
-        mock_key_manager.api_key = "test-api-key"
+        mock_km = mocker.patch("local_tavily.extract.get_key_manager")
+        mock_km.return_value.get_key.return_value = "test-api-key"
 
         mock_client_class = mocker.patch("local_tavily.extract.TavilyClient")
         mock_client = mocker.MagicMock()
@@ -84,8 +84,8 @@ class TestExtractModule:
 
     def test_extract_api_error(self, mocker):
         """Test extraction with API error."""
-        mock_key_manager = mocker.patch("local_tavily.extract.key_manager")
-        mock_key_manager.api_key = "test-api-key"
+        mock_km = mocker.patch("local_tavily.extract.get_key_manager")
+        mock_km.return_value.get_key.return_value = "test-api-key"
 
         mock_client_class = mocker.patch("local_tavily.extract.TavilyClient")
         mock_client = mocker.MagicMock()
@@ -99,8 +99,8 @@ class TestExtractModule:
 
     def test_extract_single_url_string(self, mocker):
         """Test extraction with single URL as string."""
-        mock_key_manager = mocker.patch("local_tavily.extract.key_manager")
-        mock_key_manager.api_key = "test-api-key"
+        mock_km = mocker.patch("local_tavily.extract.get_key_manager")
+        mock_km.return_value.get_key.return_value = "test-api-key"
 
         mock_client_class = mocker.patch("local_tavily.extract.TavilyClient")
         mock_client = mocker.MagicMock()

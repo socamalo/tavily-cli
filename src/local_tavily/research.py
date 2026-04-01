@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 
 from tavily import TavilyClient
 
-from local_tavily.key_manager import key_manager
+from local_tavily.key_manager import get_key_manager
 
 logger = logging.getLogger("local_tavily")
 
@@ -37,7 +37,7 @@ def tavily_research(
     """
     try:
         logger.info(f"Executing Tavily research: {input[:50]}...")
-        api_key = key_manager.api_key
+        api_key = get_key_manager().get_key()
         client = TavilyClient(api_key=api_key)
 
         # Validate model
@@ -105,7 +105,7 @@ def tavily_research_status(request_id: str) -> Dict[str, Any]:
     """
     try:
         logger.info(f"Checking Tavily research status: {request_id}")
-        api_key = key_manager.api_key
+        api_key = get_key_manager().get_key()
         client = TavilyClient(api_key=api_key)
 
         # Get research status

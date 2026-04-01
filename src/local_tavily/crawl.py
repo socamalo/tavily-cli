@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from tavily import TavilyClient
 
-from local_tavily.key_manager import key_manager
+from local_tavily.key_manager import get_key_manager
 
 logger = logging.getLogger("local_tavily")
 
@@ -61,7 +61,7 @@ def tavily_crawl(
     """
     try:
         logger.info(f"Executing Tavily crawl: {url}")
-        api_key = key_manager.api_key
+        api_key = get_key_manager().get_key()
         client = TavilyClient(api_key=api_key)
 
         # Validate parameters

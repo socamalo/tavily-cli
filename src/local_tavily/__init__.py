@@ -5,10 +5,10 @@ This package provides a command-line interface for Tavily search,
 extraction, crawling, mapping, research, and usage capabilities.
 """
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 __author__ = "Local Tavily Team"
 
-from local_tavily.key_manager import TavilyKeyManager, get_key_manager
+from local_tavily.key_manager import TavilyKeyManager, get_key_manager, NoAvailableKeyError
 from local_tavily.utils import normalize_country, COUNTRY_CODE_MAP, VALID_TAVILY_COUNTRIES
 from local_tavily.search import tavily_search
 from local_tavily.extract import tavily_extract
@@ -21,6 +21,7 @@ __all__ = [
     "__version__",
     "TavilyKeyManager",
     "get_key_manager",
+    "NoAvailableKeyError",
     "normalize_country",
     "COUNTRY_CODE_MAP",
     "VALID_TAVILY_COUNTRIES",

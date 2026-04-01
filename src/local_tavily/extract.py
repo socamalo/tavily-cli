@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from tavily import TavilyClient
 
-from local_tavily.key_manager import key_manager
+from local_tavily.key_manager import get_key_manager
 
 logger = logging.getLogger("local_tavily")
 
@@ -44,7 +44,7 @@ def tavily_extract(
         Dictionary with extraction results
     """
     try:
-        api_key = key_manager.api_key
+        api_key = get_key_manager().get_key()
         client = TavilyClient(api_key=api_key)
 
         # Handle case when urls is a single string

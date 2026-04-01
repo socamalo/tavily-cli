@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 from tavily import TavilyClient
 
-from local_tavily.key_manager import key_manager
+from local_tavily.key_manager import get_key_manager
 
 logger = logging.getLogger("local_tavily")
 
@@ -24,7 +24,7 @@ def tavily_usage() -> Dict[str, Any]:
     """
     try:
         logger.info("Fetching Tavily usage information")
-        api_key = key_manager.api_key
+        api_key = get_key_manager().get_key()
         client = TavilyClient(api_key=api_key)
 
         # Check if usage method exists

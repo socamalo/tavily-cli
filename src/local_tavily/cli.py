@@ -79,7 +79,7 @@ def _load_env_files():
 _load_env_files()
 
 from local_tavily import __version__
-from local_tavily.key_manager import TavilyKeyManager, get_key_manager
+from local_tavily.key_manager import TavilyKeyManager, get_key_manager, NoAvailableKeyError
 from local_tavily.search import tavily_search
 from local_tavily.extract import tavily_extract
 from local_tavily.crawl import tavily_crawl
@@ -112,29 +112,17 @@ console = Console()
 def get_api_key() -> str:
     """Get the current API key from the key manager."""
     try:
-        return get_key_manager().api_key
-    except ValueError:
-        # Check for single TAVILY_API_KEY as fallback
-        single_key = os.getenv("TAVILY_API_KEY")
-        if single_key:
-            return single_key.strip()
-        raise click.ClickException(
-            "No Tavily API keys found. Please:\n"
-            "  1. Add keys to src/local_tavily/key_manager.py, or\n"
-            "  2. Set TAVILY_API_KEY_1, TAVILY_API_KEY_2, etc. environment variables"
-        )
+        return get_key_manager().get_key()
+    except NoAvailableKeyError as e:
+        raise click.ClickException(str(e))
 
 
 def validate_api_key():
     """Validate that API keys are configured."""
     try:
-        get_api_key()
-    except click.ClickException:
-        raise click.ClickException(
-            "No Tavily API keys found. Please:\n"
-            "  1. Add keys to src/local_tavily/key_manager.py, or\n"
-            "  2. Set TAVILY_API_KEY_1, TAVILY_API_KEY_2, etc. environment variables"
-        )
+        get_key_manager().get_key()
+    except NoAvailableKeyError as e:
+        raise click.ClickException(str(e))
 
 
 def parse_comma_separated(value: Optional[str]) -> Optional[List[str]]:
@@ -603,27 +591,24 @@ def version():
 def config():
     """Show configuration information."""
     try:
-        key_manager = get_key_manager()
-        num_keys = len(key_manager.keys)
-        current_key = key_manager.api_key
-        # Mask the key for display
-        masked_key = current_key[:8] + "..." + current_key[-4:] if len(current_key) > 12 else "***"
-    except ValueError:
-        num_keys = 0
-        masked_key = "Not configured"
-
-    # Check for single key fallback
-    single_key = os.getenv("TAVILY_API_KEY")
-    if single_key and num_keys == 0:
-        masked_key = single_key[:8] + "..." + single_key[-4:] if len(single_key) > 12 else "***"
-        num_keys = 1
+        km = get_key_manager()
+        keys_status = km.get_all_keys_status()
+    except (ValueError, NoAvailableKeyError) as e:
+        console.print(f"[red]Error:[/red] {e}")
+        return
 
     table = Table(title="Configuration")
-    table.add_column("Setting", style="cyan")
-    table.add_column("Value", style="green")
+    table.add_column("Key Name", style="cyan")
+    table.add_column("Usage", style="yellow")
+    table.add_column("Status", style="green")
+    table.add_column("Errors", style="red")
 
-    table.add_row("API Keys Loaded", str(num_keys))
-    table.add_row("Current Key", masked_key)
+    for key_info in keys_status:
+        usage = key_info["usage"]
+        status = "disabled" if key_info["disabled"] else f"{usage}/1000"
+        error_count = key_info["error_count"]
+        masked_key = key_info["key"][:8] + "..." if len(key_info["key"]) > 12 else "***"
+        table.add_row(f"{key_info['name']} ({masked_key})", str(usage), status, str(error_count))
 
     console.print(table)
 
