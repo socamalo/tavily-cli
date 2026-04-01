@@ -2,17 +2,19 @@
 Tavily usage functionality.
 
 This module provides the usage query function for the Tavily API.
-Note: The usage endpoint may not be available in all Tavily SDK versions.
 """
 
+import json
 import logging
 from typing import Any, Dict
 
-from tavily import TavilyClient
+import requests
 
 from local_tavily.key_manager import get_key_manager
 
 logger = logging.getLogger("local_tavily")
+
+USAGE_API_URL = "https://api.tavily.com/usage"
 
 
 def tavily_usage() -> Dict[str, Any]:
@@ -20,34 +22,47 @@ def tavily_usage() -> Dict[str, Any]:
     Get API usage information for the current API key.
 
     Returns:
-        Dictionary with usage statistics
+        Dictionary with usage statistics from the Tavily API.
+        Includes total usage, limits, and breakdown by endpoint type.
     """
     try:
         logger.info("Fetching Tavily usage information")
         api_key = get_key_manager().get_key()
-        client = TavilyClient(api_key=api_key)
 
-        # Check if usage method exists
-        if hasattr(client, 'usage'):
-            # Get usage information
-            response = client.usage()
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+        }
+
+        response = requests.get(USAGE_API_URL, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            usage_data = response.json()
             logger.info("Tavily usage information retrieved successfully")
 
             return {
                 "status": "success",
-                "usage": response,
+                "usage": usage_data,
             }
-        else:
-            # Usage endpoint not available in this SDK version
+        elif response.status_code == 401:
             return {
                 "status": "error",
-                "message": "Usage API is not available in the current Tavily SDK version. Please check the Tavily dashboard for usage information.",
+                "message": "Invalid or missing API key",
+            }
+        elif response.status_code == 429:
+            return {
+                "status": "error",
+                "message": "Rate limit exceeded. Please try again later.",
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Error fetching usage: HTTP {response.status_code}",
             }
 
     except ImportError as e:
         return {
             "status": "error",
-            "message": f"Tavily Python SDK not installed: {str(e)}",
+            "message": f"Required package not installed: {str(e)}",
         }
     except Exception as e:
         logger.error(f"Error fetching Tavily usage: {str(e)}")
