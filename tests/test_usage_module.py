@@ -1,4 +1,5 @@
 import pytest
+import requests
 from unittest.mock import patch, MagicMock
 from local_tavily.usage import fetch_key_usage
 
@@ -51,6 +52,7 @@ def test_sync_all_keys_usage_partial_failure():
             assert result["failed"] == [("key2", "Network error")]
             # key1 should be updated
             assert mock_manager._keys[0]["usage"] == 300
+            mock_manager._save_config.assert_called_once()
 
 
 def test_sync_all_keys_usage_auto_enable():
@@ -70,6 +72,7 @@ def test_sync_all_keys_usage_auto_enable():
             assert mock_manager._keys[0]["disabled"] is False  # re-enabled
             assert mock_manager._keys[0]["usage"] == 500
             assert mock_manager._keys[0]["errors"] == []  # cleared
+            mock_manager._save_config.assert_called_once()
 
 
 def test_sync_all_keys_usage_auto_disable():
@@ -88,3 +91,13 @@ def test_sync_all_keys_usage_auto_disable():
             assert result["updated"] == ["key1"]
             assert mock_manager._keys[0]["disabled"] is True  # disabled
             assert mock_manager._keys[0]["usage"] == 1200
+            mock_manager._save_config.assert_called_once()
+
+
+def test_fetch_key_usage_network_error():
+    """Test fetch_key_usage handles network errors."""
+    with patch('local_tavily.usage.requests.get', side_effect=requests.RequestException("Connection refused")):
+        success, data, error = fetch_key_usage("test-key")
+        assert success is False
+        assert data is None
+        assert "Connection refused" in error
