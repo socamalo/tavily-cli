@@ -10,7 +10,7 @@ from typing import Any, Dict, Optional
 
 import requests
 
-from local_tavily.key_manager import get_key_manager
+from local_tavily.key_manager import get_key_manager, QUOTA_PER_KEY
 
 logger = logging.getLogger("local_tavily")
 
@@ -46,9 +46,6 @@ def fetch_key_usage(api_key: str) -> tuple[bool, Optional[Dict[str, Any]], Optio
             return (False, None, f"HTTP {response.status_code}")
     except requests.RequestException as e:
         return (False, None, f"Request failed: {str(e)}")
-
-
-QUOTA_PER_KEY = 1000
 
 
 def sync_all_keys_usage() -> Dict[str, Any]:
