@@ -24,3 +24,67 @@ def test_fetch_key_usage_401():
         assert success is False
         assert data is None
         assert "401" in error
+
+
+def test_sync_all_keys_usage_partial_failure():
+    """Test sync handles partial failures gracefully."""
+    from local_tavily.usage import sync_all_keys_usage
+
+    with patch('local_tavily.usage.get_key_manager') as mock_km:
+        mock_manager = MagicMock()
+        mock_manager._keys = [
+            {"key": "key1", "name": "key1", "usage": 0, "errors": [], "disabled": False},
+            {"key": "key2", "name": "key2", "usage": 0, "errors": [], "disabled": False},
+        ]
+        mock_km.return_value = mock_manager
+
+        def mock_fetch(key):
+            if key == "key1":
+                return (True, {"usage": 300}, None)
+            else:
+                return (False, None, "Network error")
+
+        with patch('local_tavily.usage.fetch_key_usage', side_effect=mock_fetch):
+            result = sync_all_keys_usage()
+            assert result["total"] == 2
+            assert result["updated"] == ["key1"]
+            assert result["failed"] == [("key2", "Network error")]
+            # key1 should be updated
+            assert mock_manager._keys[0]["usage"] == 300
+
+
+def test_sync_all_keys_usage_auto_enable():
+    """Test key is re-enabled when API shows usage < 1000."""
+    from local_tavily.usage import sync_all_keys_usage
+
+    with patch('local_tavily.usage.get_key_manager') as mock_km:
+        mock_manager = MagicMock()
+        mock_manager._keys = [
+            {"key": "key1", "name": "key1", "usage": 1000, "errors": [{"time": "2026-04-01", "error": "old"}], "disabled": True},
+        ]
+        mock_km.return_value = mock_manager
+
+        with patch('local_tavily.usage.fetch_key_usage', return_value=(True, {"usage": 500}, None)):
+            result = sync_all_keys_usage()
+            assert result["updated"] == ["key1"]
+            assert mock_manager._keys[0]["disabled"] is False  # re-enabled
+            assert mock_manager._keys[0]["usage"] == 500
+            assert mock_manager._keys[0]["errors"] == []  # cleared
+
+
+def test_sync_all_keys_usage_auto_disable():
+    """Test key is disabled when API shows usage >= 1000."""
+    from local_tavily.usage import sync_all_keys_usage
+
+    with patch('local_tavily.usage.get_key_manager') as mock_km:
+        mock_manager = MagicMock()
+        mock_manager._keys = [
+            {"key": "key1", "name": "key1", "usage": 500, "errors": [], "disabled": False},
+        ]
+        mock_km.return_value = mock_manager
+
+        with patch('local_tavily.usage.fetch_key_usage', return_value=(True, {"usage": 1200}, None)):
+            result = sync_all_keys_usage()
+            assert result["updated"] == ["key1"]
+            assert mock_manager._keys[0]["disabled"] is True  # disabled
+            assert mock_manager._keys[0]["usage"] == 1200

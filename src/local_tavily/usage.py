@@ -48,6 +48,55 @@ def fetch_key_usage(api_key: str) -> tuple[bool, Optional[Dict[str, Any]], Optio
         return (False, None, f"Request failed: {str(e)}")
 
 
+QUOTA_PER_KEY = 1000
+
+
+def sync_all_keys_usage() -> Dict[str, Any]:
+    """
+    Sync usage data for all keys from Tavily API to local config.
+
+    Iterates all keys in keys.json, fetches usage from API for each,
+    and updates local config with the results.
+
+    Returns:
+        Dict with keys: {updated: [names], failed: [(name, error)], total: int}
+    """
+    km = get_key_manager()
+    updated = []
+    failed = []
+
+    for key_data in km._keys:
+        key_name = key_data.get("name", key_data["key"][:8])
+        api_key = key_data["key"]
+
+        success, usage_data, error = fetch_key_usage(api_key)
+
+        if success and usage_data is not None:
+            api_usage = usage_data.get("usage")
+            if api_usage is not None:
+                key_data["usage"] = api_usage
+                # Auto-enable if under quota, disable if over quota
+                if api_usage < QUOTA_PER_KEY:
+                    key_data["disabled"] = False
+                else:
+                    key_data["disabled"] = True
+                # Clear errors when usage is synced (indicates reset)
+                key_data["errors"] = []
+                updated.append(key_name)
+            # else: API returned null usage, skip
+        else:
+            failed.append((key_name, error or "Unknown error"))
+
+    km._dirty = True
+    km._save_config()
+
+    return {
+        "updated": updated,
+        "failed": failed,
+        "total": len(km._keys),
+    }
+
+
 def tavily_usage() -> Dict[str, Any]:
     """
     Get API usage information for the current API key.
