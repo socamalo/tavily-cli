@@ -558,10 +558,13 @@ def research_status(
 @click.option('--output', '-o', type=click.Choice(['table', 'json']), default='table',
               help='Output format')
 def usage(output: str):
-    """Get API usage information."""
+    """Get API usage information and sync all keys to local config."""
     validate_api_key()
 
-    # Execute usage query
+    # Show syncing progress
+    console.print("[yellow]Syncing all keys...[/yellow]")
+
+    # Execute usage query (which now syncs internally)
     results = tavily_usage()
 
     # Handle errors
@@ -573,6 +576,18 @@ def usage(output: str):
         click.echo(format_usage_json(results))
     else:  # table
         format_usage_table(results)
+
+    # Show sync result
+    sync_result = results.get("sync_result", {})
+    updated = sync_result.get("updated", [])
+    failed = sync_result.get("failed", [])
+    total = sync_result.get("total", 0)
+
+    if failed:
+        failed_names = ", ".join([f[0] for f in failed])
+        console.print(f"[yellow]Synced {len(updated)}/{total} keys. Failed: {failed_names}[/yellow]")
+    else:
+        console.print(f"[green]Synced {len(updated)}/{total} keys successfully[/green]")
 
 
 @cli.command()
