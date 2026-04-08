@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "last_reset_date": "2026-04-01",
+  "keys": [
+    {
+      "key": "tvly-YOUR-ACTUAL-KEY-HERE",
+      "name": "key1",
+      "usage": 0,
+      "errors": [],
+      "disabled": false
+    },
+    {
+      "key": "tvly-YOUR-ACTUAL-KEY-HERE",
+      "name": "key2",
+      "usage": 0,
+      "errors": [],
+      "disabled": false
+    },
+    {
+      "key": "tvly-YOUR-ACTUAL-KEY-HERE",
+      "name": "key3",
+      "usage": 0,
+      "errors": [],
+      "disabled": false
+    }
+  ]
+}
