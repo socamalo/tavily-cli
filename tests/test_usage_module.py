@@ -101,3 +101,29 @@ def test_fetch_key_usage_network_error():
         assert success is False
         assert data is None
         assert "Connection refused" in error
+
+
+def test_tavily_usage_syncs_all_keys():
+    """Test tavily_usage calls sync and returns account data."""
+    from local_tavily.usage import tavily_usage
+
+    with patch('local_tavily.usage.sync_all_keys_usage') as mock_sync, \
+         patch('local_tavily.usage.get_key_manager') as mock_km:
+
+        mock_sync.return_value = {"updated": ["key1"], "failed": [], "total": 1}
+
+        # Mock a successful API call for the active key's account data
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "key": {"usage": 100},
+            "account": {"current_plan": "Researcher", "plan_limit": 1000}
+        }
+
+        with patch('local_tavily.usage.requests.get', return_value=mock_response):
+            result = tavily_usage()
+            assert result["status"] == "success"
+            assert "sync_result" in result
+            assert result["sync_result"]["updated"] == ["key1"]
+            # Verify sync was called
+            mock_sync.assert_called_once()

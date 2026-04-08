@@ -101,12 +101,19 @@ def tavily_usage() -> Dict[str, Any]:
     """
     Get API usage information for the current API key.
 
+    First syncs all keys' usage data from Tavily API, then fetches
+    account data for the active key.
+
     Returns:
         Dictionary with usage statistics from the Tavily API.
         Includes total usage, limits, and breakdown by endpoint type.
+        Always includes sync_result with keys: {updated, failed, total}.
     """
     try:
-        logger.info("Fetching Tavily usage information")
+        # First, sync all keys' usage from the API
+        sync_result = sync_all_keys_usage()
+        logger.info(f"Synced usage for {sync_result['updated']} keys")
+
         api_key = get_key_manager().get_key()
 
         headers = {
@@ -116,37 +123,50 @@ def tavily_usage() -> Dict[str, Any]:
         response = requests.get(USAGE_API_URL, headers=headers, timeout=30)
 
         if response.status_code == 200:
-            usage_data = response.json()
+            try:
+                usage_data = response.json()
+            except json.JSONDecodeError:
+                return {
+                    "status": "error",
+                    "message": "Invalid JSON response from API",
+                    "sync_result": sync_result,
+                }
             logger.info("Tavily usage information retrieved successfully")
 
             return {
                 "status": "success",
                 "usage": usage_data,
+                "sync_result": sync_result,
             }
         elif response.status_code == 401:
             return {
                 "status": "error",
                 "message": "Invalid or missing API key",
+                "sync_result": sync_result,
             }
         elif response.status_code == 429:
             return {
                 "status": "error",
                 "message": "Rate limit exceeded. Please try again later.",
+                "sync_result": sync_result,
             }
         else:
             return {
                 "status": "error",
                 "message": f"Error fetching usage: HTTP {response.status_code}",
+                "sync_result": sync_result,
             }
 
     except ImportError as e:
         return {
             "status": "error",
             "message": f"Required package not installed: {str(e)}",
+            "sync_result": {"updated": [], "failed": [], "total": 0},
         }
     except Exception as e:
         logger.error(f"Error fetching Tavily usage: {str(e)}")
         return {
             "status": "error",
             "message": f"Error fetching Tavily usage: {str(e)}",
+            "sync_result": {"updated": [], "failed": [], "total": 0},
         }
