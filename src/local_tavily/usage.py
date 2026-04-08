@@ -6,7 +6,7 @@ This module provides the usage query function for the Tavily API.
 
 import json
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -15,6 +15,37 @@ from local_tavily.key_manager import get_key_manager
 logger = logging.getLogger("local_tavily")
 
 USAGE_API_URL = "https://api.tavily.com/usage"
+
+
+def fetch_key_usage(api_key: str) -> tuple[bool, Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Fetch usage data for a single API key.
+
+    Args:
+        api_key: The API key to check
+
+    Returns:
+        Tuple of (success, usage_data, error_message)
+        usage_data is the 'key' dict from API response, or None on failure
+    """
+    try:
+        headers = {"Authorization": f"Bearer {api_key}"}
+        response = requests.get(USAGE_API_URL, headers=headers, timeout=30)
+
+        if response.status_code == 200:
+            try:
+                usage_data = response.json()
+            except json.JSONDecodeError:
+                return (False, None, "Invalid JSON response from API")
+            return (True, usage_data.get("key"), None)
+        elif response.status_code == 401:
+            return (False, None, "Invalid or missing API key (401)")
+        elif response.status_code == 429:
+            return (False, None, "Rate limit exceeded (429)")
+        else:
+            return (False, None, f"HTTP {response.status_code}")
+    except requests.RequestException as e:
+        return (False, None, f"Request failed: {str(e)}")
 
 
 def tavily_usage() -> Dict[str, Any]:
